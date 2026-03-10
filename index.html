@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Cookbook</title>
+  <style>
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red:       #c0392b;
+      --red-light: #e74c3c;
+      --cream:     #fdf6ee;
+      --warm-gray: #f5ede0;
+      --text:      #2c1810;
+      --text-soft: #7a5c4a;
+      --border:    #e8d5c0;
+      --sidebar-w: 200px;
+      --header-h:  58px;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Header ── */
+    header {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: var(--header-h);
+      background: var(--red);
+      display: flex; align-items: center; gap: 16px;
+      padding: 0 20px;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .site-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #fff;
+      text-transform: uppercase;
+      flex: 1;
+    }
+    .search-wrap {
+      position: relative;
+    }
+    #search {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 20px;
+      padding: 7px 14px 7px 36px;
+      color: #fff;
+      font-size: 14px;
+      width: 200px;
+      outline: none;
+      transition: background 0.2s, width 0.2s;
+    }
+    #search::placeholder { color: rgba(255,255,255,0.65); }
+    #search:focus { background: rgba(255,255,255,0.25); width: 240px; }
+    .search-icon {
+      position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+      color: rgba(255,255,255,0.7); font-size: 15px; pointer-events: none;
+    }
+    .menu-btn {
+      display: none;
+      background: none; border: none; cursor: pointer;
+      color: #fff; font-size: 22px; padding: 4px;
+    }
+
+    /* ── Layout ── */
+    .layout {
+      margin-top: var(--header-h);
+      display: flex;
+      min-height: calc(100vh - var(--header-h));
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      background: #fff;
+      border-right: 1px solid var(--border);
+      position: sticky;
+      top: var(--header-h);
+      height: calc(100vh - var(--header-h));
+      overflow-y: auto;
+      padding: 12px 0;
+    }
+    .sidebar-section {
+      padding: 8px 16px 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--text-soft);
+      text-transform: uppercase;
+    }
+    .nav-item {
+      display: block;
+      padding: 9px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      color: var(--text);
+      border-left: 3px solid transparent;
+      transition: background 0.12s, border-color 0.12s;
+      user-select: none;
+    }
+    .nav-item:hover { background: var(--warm-gray); }
+    .nav-item.active {
+      border-left-color: var(--red);
+      background: var(--warm-gray);
+      font-weight: 600;
+      color: var(--red);
+    }
+    .nav-count {
+      float: right;
+      font-size: 11px;
+      color: var(--text-soft);
+      font-weight: 400;
+    }
+
+    /* ── Main content ── */
+    .main {
+      flex: 1;
+      min-width: 0;
+      padding: 24px;
+    }
+
+    /* ── Recipe grid ── */
+    #recipe-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+    }
+    .recipe-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .recipe-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    }
+    .card-photo {
+      width: 100%; aspect-ratio: 4/3;
+      object-fit: cover;
+      display: block;
+      background: var(--warm-gray);
+    }
+    .card-photo-placeholder {
+      width: 100%; aspect-ratio: 4/3;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--warm-gray);
+      font-size: 30px;
+      color: var(--border);
+    }
+    .card-body {
+      padding: 10px 12px 12px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: var(--text);
+    }
+    .card-chinese {
+      font-size: 11px;
+      color: var(--text-soft);
+      margin-top: 3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .card-tag {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      background: var(--warm-gray);
+      color: var(--text-soft);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-soft);
+    }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state h3 { font-size: 18px; margin-bottom: 6px; }
+
+    /* ── Recipe detail panel ── */
+    #detail-panel {
+      display: none;
+      position: fixed;
+      top: var(--header-h); left: 0; right: 0; bottom: 0;
+      background: var(--cream);
+      z-index: 90;
+      overflow-y: auto;
+    }
+    #detail-panel.open { display: block; }
+    .detail-inner {
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+    }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 14px; font-weight: 600;
+      color: var(--red); cursor: pointer; margin-bottom: 20px;
+      background: none; border: none; padding: 0;
+    }
+    .back-btn:hover { opacity: 0.75; }
+    .detail-photo {
+      width: 100%;
+      max-height: 420px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      display: block;
+    }
+    .detail-title {
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+    .detail-meta {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      margin-bottom: 16px; margin-top: 6px;
+    }
+    .meta-tag {
+      font-size: 11px; padding: 3px 10px; border-radius: 12px;
+      font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .meta-tag.book { background: #fdebd0; color: #a04000; }
+    .meta-tag.chapter { background: #d5f5e3; color: #1e8449; }
+    .detail-chinese {
+      font-size: 15px; color: var(--text-soft); margin-bottom: 12px;
+    }
+    .detail-intro {
+      font-size: 15px; line-height: 1.7; color: #4a3728;
+      margin-bottom: 24px;
+      padding: 14px 18px;
+      background: #fff;
+      border-left: 3px solid var(--red);
+      border-radius: 0 8px 8px 0;
+    }
+    .detail-cols {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    .detail-section h3 {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .ingredients-list {
+      list-style: none;
+    }
+    .ingredients-list li {
+      font-size: 14px; line-height: 1.55;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    .instructions-text {
+      font-size: 14px;
+      line-height: 1.75;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+    .variations-box {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 18px;
+    }
+    .variations-box h3 {
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-soft); margin-bottom: 8px;
+    }
+    .variations-box p {
+      font-size: 14px; line-height: 1.65; color: var(--text);
+    }
+
+    /* ── Section heading in list view ── */
+    .list-heading {
+      grid-column: 1 / -1;
+      display: flex; align-items: center; gap: 12px;
+      margin: 8px 0 4px;
+    }
+    .list-heading h2 {
+      font-size: 16px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-soft);
+      white-space: nowrap;
+    }
+    .list-heading hr {
+      flex: 1; border: none; border-top: 1px solid var(--border);
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 640px) {
+      :root { --sidebar-w: 100%; }
+      .menu-btn { display: block; }
+      .site-title { font-size: 15px; }
+      #search { width: 140px; }
+      #search:focus { width: 160px; }
+
+      .sidebar {
+        position: fixed;
+        top: var(--header-h); left: 0; right: 0;
+        width: 100%;
+        height: auto;
+        max-height: calc(100vh - var(--header-h));
+        z-index: 80;
+        transform: translateY(-110%);
+        transition: transform 0.25s ease;
+      }
+      .sidebar.open { transform: translateY(0); }
+      .layout { flex-direction: column; }
+      .main { padding: 16px; }
+
+      #recipe-list {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
+      }
+      .detail-cols {
+        grid-template-columns: 1fr;
+      }
+      .detail-title { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <button class="menu-btn" id="menu-btn" aria-label="Menu">☰</button>
+  <span class="site-title">My Cookbook</span>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="search" id="search" placeholder="Search recipes…" autocomplete="off">
+  </div>
+</header>
+
+<!-- Layout -->
+<div class="layout">
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-section">Browse by</div>
+    <div class="nav-item active" data-cat="all">
+      All Recipes <span class="nav-count" id="count-all"></span>
+    </div>
+
+    <div class="sidebar-section" style="margin-top:8px">Category</div>
+    <div class="nav-item" data-cat="pork">Pork <span class="nav-count" id="count-pork"></span></div>
+    <div class="nav-item" data-cat="chicken-eggs">Chicken &amp; Eggs <span class="nav-count" id="count-chicken-eggs"></span></div>
+    <div class="nav-item" data-cat="beef-lamb">Beef &amp; Lamb <span class="nav-count" id="count-beef-lamb"></span></div>
+    <div class="nav-item" data-cat="seafood">Seafood <span class="nav-count" id="count-seafood"></span></div>
+    <div class="nav-item" data-cat="tofu">Tofu <span class="nav-count" id="count-tofu"></span></div>
+    <div class="nav-item" data-cat="vegetables">Vegetables <span class="nav-count" id="count-vegetables"></span></div>
+    <div class="nav-item" data-cat="noodles">Noodles &amp; Rice <span class="nav-count" id="count-noodles"></span></div>
+    <div class="nav-item" data-cat="soups">Soups <span class="nav-count" id="count-soups"></span></div>
+    <div class="nav-item" data-cat="other">Other <span class="nav-count" id="count-other"></span></div>
+
+    <div class="sidebar-section" style="margin-top:8px">Books</div>
+    <div class="nav-item" data-book="Every Grain of Rice">Every Grain of Rice</div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+    <div id="recipe-list"></div>
+  </main>
+</div>
+
+<!-- Detail panel (full-screen overlay) -->
+<div id="detail-panel">
+  <div class="detail-inner" id="detail-inner"></div>
+</div>
+
+<script>
+// ── Data loading ──────────────────────────────────────────────────────────
+let ALL_RECIPES = [];
+let filteredRecipes = [];
+let activeFilter = { cat: 'all', book: null, query: '' };
+
+async function loadData() {
+  try {
+    const res = await fetch('recipes.json');
+    if (!res.ok) throw new Error('Could not load recipes.json');
+    const data = await res.json();
+    ALL_RECIPES = data.recipes || [];
+  } catch (e) {
+    // If running locally from file system without a server, try inline data
+    console.warn('Could not fetch recipes.json. Make sure you serve this folder or open via a local server.', e);
+    ALL_RECIPES = [];
+  }
+  buildCounts();
+  applyFilter();
+}
+
+// ── Counts ────────────────────────────────────────────────────────────────
+function buildCounts() {
+  const cats = ['pork','chicken-eggs','beef-lamb','seafood','tofu','vegetables','noodles','soups','other'];
+  document.getElementById('count-all').textContent = ALL_RECIPES.length;
+  cats.forEach(c => {
+    const el = document.getElementById('count-' + c);
+    if (el) el.textContent = ALL_RECIPES.filter(r => r.ingredient_category === c).length;
+  });
+}
+
+// ── Filter & render ───────────────────────────────────────────────────────
+const CATEGORY_LABELS = {
+  pork: 'Pork',
+  'chicken-eggs': 'Chicken & Eggs',
+  'beef-lamb': 'Beef & Lamb',
+  seafood: 'Seafood',
+  tofu: 'Tofu',
+  vegetables: 'Vegetables',
+  noodles: 'Noodles & Rice',
+  soups: 'Soups',
+  other: 'Other',
+};
+
+function applyFilter() {
+  const { cat, book, query } = activeFilter;
+  const q = query.toLowerCase().trim();
+
+  filteredRecipes = ALL_RECIPES.filter(r => {
+    if (cat !== 'all' && r.ingredient_category !== cat) return false;
+    if (book && r.source_book !== book) return false;
+    if (q) {
+      const haystack = [r.title, r.chinese_name, ...(r.ingredients || [])].join(' ').toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  });
+
+  renderList(filteredRecipes);
+}
+
+function renderList(recipes) {
+  const list = document.getElementById('recipe-list');
+  if (!recipes.length) {
+    list.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="icon">🥢</div>
+      <h3>No recipes found</h3>
+      <p>Try a different filter or search term.</p>
+    </div>`;
+    return;
+  }
+
+  // Group by category if showing "all" without search
+  const grouped = (activeFilter.cat === 'all' && !activeFilter.query && !activeFilter.book);
+
+  let html = '';
+  if (grouped) {
+    const byCategory = {};
+    recipes.forEach(r => {
+      const c = r.ingredient_category || 'other';
+      if (!byCategory[c]) byCategory[c] = [];
+      byCategory[c].push(r);
+    });
+    const catOrder = ['pork','chicken-eggs','beef-lamb','seafood','tofu','vegetables','noodles','soups','other'];
+    catOrder.forEach(cat => {
+      if (byCategory[cat]) {
+        html += `<div class="list-heading"><h2>${CATEGORY_LABELS[cat] || cat}</h2><hr></div>`;
+        html += byCategory[cat].map(r => cardHTML(r)).join('');
+      }
+    });
+  } else {
+    html = recipes.map(r => cardHTML(r)).join('');
+  }
+
+  list.innerHTML = html;
+
+  // Attach click handlers
+  list.querySelectorAll('.recipe-card').forEach(el => {
+    el.addEventListener('click', () => openDetail(el.dataset.id));
+  });
+}
+
+function cardHTML(r) {
+  const photo = r.photo_file
+    ? `<img class="card-photo" src="${escapeAttr(r.photo_file)}" alt="${escapeAttr(r.title)}" loading="lazy">`
+    : `<div class="card-photo-placeholder">🥢</div>`;
+  const chinese = r.chinese_name ? `<div class="card-chinese">${escapeHTML(r.chinese_name)}</div>` : '';
+  const catLabel = CATEGORY_LABELS[r.ingredient_category] || r.ingredient_category || '';
+  return `<div class="recipe-card" data-id="${escapeAttr(r.id)}">
+    ${photo}
+    <div class="card-body">
+      <div class="card-title">${escapeHTML(r.title)}</div>
+      ${chinese}
+      <span class="card-tag">${escapeHTML(catLabel)}</span>
+    </div>
+  </div>`;
+}
+
+// ── Detail view ───────────────────────────────────────────────────────────
+function openDetail(id) {
+  const r = ALL_RECIPES.find(x => x.id === id);
+  if (!r) return;
+
+  const panel = document.getElementById('detail-panel');
+  const inner = document.getElementById('detail-inner');
+
+  const photo = r.photo_file
+    ? `<img class="detail-photo" src="${escapeAttr(r.photo_file)}" alt="${escapeAttr(r.title)}">`
+    : '';
+
+  const chinese = r.chinese_name
+    ? `<div class="detail-chinese">${escapeHTML(r.chinese_name)}</div>` : '';
+
+  const intro = r.introduction
+    ? `<div class="detail-intro">${escapeHTML(r.introduction)}</div>` : '';
+
+  const ingList = (r.ingredients || []).map(i => `<li>${escapeHTML(i)}</li>`).join('');
+
+  const instructions = r.instructions
+    ? `<div class="instructions-text">${escapeHTML(r.instructions)}</div>` : '<p style="color:#aaa;font-size:14px">—</p>';
+
+  const variations = (r.variations || []).length
+    ? `<div class="variations-box">
+        <h3>Variation${r.variations.length > 1 ? 's' : ''}</h3>
+        ${r.variations.map(v => `<p>${escapeHTML(v)}</p>`).join('<br>')}
+       </div>` : '';
+
+  const catLabel = CATEGORY_LABELS[r.ingredient_category] || r.ingredient_category || '';
+
+  inner.innerHTML = `
+    <button class="back-btn" id="back-btn">← Back</button>
+    ${photo}
+    <h1 class="detail-title">${escapeHTML(r.title)}</h1>
+    ${chinese}
+    <div class="detail-meta">
+      <span class="meta-tag book">${escapeHTML(r.source_book || '')}</span>
+      ${r.chapter ? `<span class="meta-tag chapter">${escapeHTML(r.chapter)}</span>` : ''}
+      ${catLabel ? `<span class="meta-tag" style="background:#e8d5f5;color:#5b2e7a">${escapeHTML(catLabel)}</span>` : ''}
+    </div>
+    ${intro}
+    <div class="detail-cols">
+      <div class="detail-section">
+        <h3>Ingredients</h3>
+        <ul class="ingredients-list">${ingList || '<li style="color:#aaa">—</li>'}</ul>
+      </div>
+      <div class="detail-section">
+        <h3>Instructions</h3>
+        ${instructions}
+      </div>
+    </div>
+    ${variations}
+  `;
+
+  panel.classList.add('open');
+  panel.scrollTop = 0;
+
+  document.getElementById('back-btn').addEventListener('click', closeDetail);
+}
+
+function closeDetail() {
+  document.getElementById('detail-panel').classList.remove('open');
+}
+
+// ── Nav events ────────────────────────────────────────────────────────────
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => {
+    const cat = el.dataset.cat;
+    const book = el.dataset.book;
+
+    document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+    el.classList.add('active');
+
+    if (cat) { activeFilter.cat = cat; activeFilter.book = null; }
+    if (book) { activeFilter.book = book; activeFilter.cat = 'all'; }
+
+    applyFilter();
+    closeSidebar();
+  });
+});
+
+document.getElementById('search').addEventListener('input', e => {
+  activeFilter.query = e.target.value;
+  applyFilter();
+});
+
+// ── Mobile sidebar ────────────────────────────────────────────────────────
+const menuBtn = document.getElementById('menu-btn');
+const sidebar = document.getElementById('sidebar');
+
+menuBtn.addEventListener('click', () => {
+  sidebar.classList.toggle('open');
+});
+
+function closeSidebar() {
+  sidebar.classList.remove('open');
+}
+
+// Close sidebar when clicking outside
+document.addEventListener('click', e => {
+  if (!sidebar.contains(e.target) && e.target !== menuBtn) {
+    closeSidebar();
+  }
+});
+
+// Keyboard: Escape closes detail or sidebar
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('detail-panel').classList.contains('open')) {
+      closeDetail();
+    } else {
+      closeSidebar();
+    }
+  }
+});
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function escapeHTML(s) {
+  if (!s) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+function escapeAttr(s) {
+  return escapeHTML(s);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
